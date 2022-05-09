@@ -13,6 +13,9 @@ const userSchema = new Schema({
   role: { type: String, enum: ["ADMIN", "USER"], default: "USER" },
   isActive: { type: Boolean, default: true },
   disabledOn: { type: Date },
+  accountNumber: { type: Number, unique: true },
+  saldo: { type: Number, default: 0}
+
 });
 
 const UserModel = model("User", userSchema);

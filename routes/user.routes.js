@@ -23,13 +23,15 @@ router.post("/signup", async (req, res) => {
 
     const salt = await bcrypt.genSalt(saltRounds);
     const passwordHash = await bcrypt.hash(password, salt);
-
+    const accountNumber = Math.floor(Math.random() * 100000);
     const createdUser = await UserModel.create({
       ...req.body,
-      passwordHash: passwordHash,
+      passwordHash: passwordHash, accountNumber: accountNumber
     });
 
     delete createdUser._doc.passwordHash;
+
+    
 
     return res.status(201).json(createdUser);
   } catch (error) {
@@ -40,12 +42,12 @@ router.post("/signup", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { accountNumber, password } = req.body;
 
-    const user = await UserModel.findOne({ email: email });
+    const user = await UserModel.findOne({ accountNumber: accountNumber });
 
     if (!user) {
-      return res.status(400).json({ msg: "Wrong password or email." });
+      return res.status(400).json({ msg: "Wrong password or account." });
     }
 
     if (await bcrypt.compare(password, user.passwordHash)) {
@@ -57,7 +59,7 @@ router.post("/login", async (req, res) => {
         user: { ...user._doc },
       });
     } else {
-      return res.status(400).json({ msg: "Wrong password or email." });
+      return res.status(400).json({ msg: "Wrong password or account." });
     }
   } catch (error) {
     console.log(error);
@@ -85,6 +87,20 @@ router.patch("/update-profile", isAuth, attachCurrentUser, async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json(error);
+  }
+});
+
+
+router.post("/transfer", isAuth, attachCurrentUser, async (req, res) => {
+  try {
+
+      const findUser = await UserModel.findOne({_id: req.currentUser})
+      const novoSaldo = await UserModel.findOneAndUpdate({_id: req.currentUser}, {saldo: findUser.saldo + req.body.credito})
+
+      return res.status(201).json(novoSaldo);
+  } catch (err) {
+      console.log(err)
+      return res.status(500).json(err)
   }
 });
 
